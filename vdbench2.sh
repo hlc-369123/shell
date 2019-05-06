@@ -23,16 +23,12 @@ done
 }
 
 rm -f ./vdbench_test-file
-for i in `ls $PATH|grep 'vol'|grep -v 'test'|sort -n -k 1`
+for i in single_vol nude_vol mix_vol
 do
-for x in $(ls $i/|grep -v 'tar.gz'|sort -n -k 1)
-do
-echo "$i/$x" >> ./vdbench_test-file
-done
+ls $i|sort -n -k 1 >> ./vdbench_test-file
 done
 
-dir='/root/vdbench50407/conf'
-for i in $(cat ${dir}/vdbench_test-file)
+for i in $(cat ${PATH}/vdbench_test-file)
 do
 mode="read"
 result=$(echo ${i} | grep "${mode}")
@@ -43,7 +39,7 @@ sleep 2
 ceph tell osd.* injectargs '--mscache_flush_waterlevel 80'
 sleep 1
 fi
-/root/vdbench50407/vdbench -f ${dir}/${i}
+/root/vdbench50407/vdbench -f ${PATH}/${i}
 sleep 3
 tar -zcvf ${dir}/${i}.tar.gz /root/vdbench50407/output/
 done
