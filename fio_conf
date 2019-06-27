@@ -21,7 +21,31 @@ fio --filename=/dev/sdl --direct=1 --rw=randwrite --numjobs=4 --iodepth=4 \
 --ioengine=libaio --bs=256k --group_reporting --name=lc_test --log_avg_msec=500 \
 --write_bw_log=test-fio --write_lat_log=test-fio --write_iops_log=test-fio --size=1G --runtime=300 --time_based
 
+---------------------------------------------------------------------------------------------------
+[global]
+thread=1
+ioengine=libaio
+time_based
+runtime=600
+direct=1
+norandommap=1
+randrepeat=0
+iodepth=4
+rw=readwrite
+bs=256k
+group_reporting
+filename=/dev/sdl
 
+[xsky]
+filename=/dev/sdl
+size=8G
+numjobs=5
+name=lc_test1
+log_avg_msec=500
+write_bw_log=test-fio
+write_lat_log=test-fio
+write_iops_log=test-fio
+--------------------------------------------------------------------------------------
 
 
   ㈠ 概念
