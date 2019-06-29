@@ -290,3 +290,45 @@ do
         done
     done
 done
+
+
+-----------------------------------------------------------------------------------------
+
+测试脚本：
+#!/bin/bash
+
+disk_name=''
+for i in $(lsblk |grep disk|awk '{print $1}')
+do
+    disk_type=$(lsblk -o NAME,FSTYPE|grep $i|awk '{print $2}')
+    disk_info=$(lsblk -o NAME,SIZE|grep $i)
+    if [  "${disk_type}" == '' ];then
+        disk_type='未格式化'
+        disk_name="$disk_name $(echo "$disk_info" |awk '{print $1}')"
+    fi
+done
+PS3="请选择磁盘序列数字:"
+#disk_name=$(lsblk|grep disk|awk '{printf $1" "}')
+num=1
+if [ -z "$disk_name" ];then echo '系统上没有可测试的卷!...';exit 0;fi
+select choice in $disk_name Quit
+do
+    case $choice in
+        $choice)
+            if [ "$choice" == "Quit" ];then
+                exit 0
+            elif [ -n "$choice" ];then
+                disk_name="$choice"
+                break
+            elif [ -z "$choice" ];then
+                if [ "$num" -ge 3 ];then
+                    echo "$num)您可以重新运行!..."
+                    exit 2
+                else
+                    echo "$num)请输入正确的序列号!"
+                fi
+                ((num++))
+            fi
+    esac
+done
+echo "fio 将开始对 $disk_name 磁盘进行测试！..."
