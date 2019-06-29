@@ -180,3 +180,42 @@ do
         done
     done
 done
+------------------------------------------------------------------------------
+#!/BIN/BASh
+
+PS3="请选择磁盘:"
+asd=$(lsblk|grep disk|awk '{printf $1" "}')
+select choice in $asd Quit ;do
+    case $choice in
+        $choice)
+            if [ "${choice}" == "Quit" ];then break;fi
+            echo "disk is ${choice} "
+            ;;
+        *)
+            echo "Enter error!"
+            exit 2
+    esac
+done
+----------------------------------------------------------------------------------
+#!/bin/bash
+
+disk_num=0
+for i in $(lsblk |grep disk|awk '{print $1}')
+do
+    disk_type=$(lsblk -o NAME,FSTYPE|grep $i|awk '{print $2}')
+    disk_info=$(lsblk -o NAME,SIZE|grep $i)
+    if [  "${disk_type}" == '' ];then
+        ((disk_num++))
+        disk_type='未格式化'
+        echo "$disk_info" |awk '{print $1"\t""'${disk_type}'""\t"$2}'
+    fi
+done
+for ((i=1; i<=${disk_num}; i++))
+do
+    case ${i} in
+        ${i})
+            echo "不及格${i}！"
+            ;;
+    esac
+done
+---------------------------------------------------------------------------------
