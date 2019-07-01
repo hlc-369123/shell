@@ -1,0 +1,1 @@
+egrep 'ioengine=|write:|lat' $(basename `pwd`).txt |egrep -v '%|clat|slat'
