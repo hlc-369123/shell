@@ -239,7 +239,7 @@ echo fio --filename=/dev/$1 --direct=1 --rw=$2 --numjobs=$3 --iodepth=$4 \
 #blok_size=$(lsblk -o SIZE /dev/sdl|grep -v SIZE) (块的大小)
 
 disk_name=''
-for i in $(lsblk |grep disk|awk '{print $1}')
+for i in $(lsblk |grep disk|egrep 'sd|hd|vd'|awk '{print $1}')
 do
     disk_type=$(lsblk -o NAME,FSTYPE|grep $i|awk '{print $2}')
     disk_info=$(lsblk -o NAME,SIZE|grep $i)
@@ -298,7 +298,7 @@ done
 #!/bin/bash
 
 disk_name=''
-for i in $(lsblk |grep disk|awk '{print $1}')
+for i in $(lsblk |grep disk|egrep 'sd|hd|vd'|awk '{print $1}')
 do
     disk_type=$(lsblk -o NAME,FSTYPE|grep $i|awk '{print $2}')
     disk_info=$(lsblk -o NAME,SIZE|grep $i)
