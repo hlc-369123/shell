@@ -1,0 +1,12 @@
+for beijing in $(seq 40 47);do for ziti in $(seq 30 37);do bash test_clo.sh $beijing $ziti;done;done
+
+#!/bin/bash
+
+RED_COLOUR="\033[1;5;$1;$2m"
+RES="\033[0m"
+
+echo $1 $2
+echo -e "${RED_COLOUR}>>>${RES}"
+echo -e "${RED_COLOUR}>>>${RES}"
+echo -e "${RED_COLOUR}>>>${RES}"
+echo -e "${RED_COLOUR}>>>${RES}\n"
