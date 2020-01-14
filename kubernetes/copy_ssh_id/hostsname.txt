@@ -1,0 +1,9 @@
+# 此工具会将非本节点，之前已经免密文件覆盖，推荐在新环境中使用，或者提前备份非本节点"/root/.ssh/authorized_keys"文件，待免密完成后追加即可;
+# 请符合以下格式要求：
+
+# hostlist1:hostname1 10.1.1.x password
+# hostlist2: hostname1 10.1.1.x password
+# hostlist3:	hostname1 10.1.1.x password
+hostlist1:k8s-1 1.1.1.11 1
+hostlist2:k8s-2 1.1.1.12 1
+hostlist3:k8s-3 1.1.1.13 1
