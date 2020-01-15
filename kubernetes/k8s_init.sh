@@ -61,7 +61,7 @@ echo "==>停掉NetworkManager.service:"
 systemctl stop NetworkManager.service
 systemctl disable NetworkManager.service
 
- 
+
 echo "==>加快ssh连接速度:"
 sed -i 's/GSSAPIAuthentication yes/GSSAPIAuthentication no/g' /etc/ssh/sshd_config
 sed -i 's/#UseDNS yes/UseDNS no/g' /etc/ssh/sshd_config
@@ -71,7 +71,7 @@ echo "==>将当前的 UTC 时间写入硬件时钟:"
 timedatectl set-local-rtc 0
 
 echo "==>重启依赖于系统时间的服务:"
-systemctl restart rsyslog 
+systemctl restart rsyslog
 systemctl restart crond
 
 echo "==>停止无关的服务:"
@@ -120,28 +120,3 @@ EOF
 
 echo "==>安装docker:"
 yum install -y conntrack ntpdate ntp ipvsadm ipset jq iptables curl sysstat libseccomp wget yum-utils device-mapper-persistent-data lvm2
-yum install -y --setopt=obsoletes=0 docker-ce-18.06.1.ce-3.el7
-systemctl start docker;systemctl enable docker
-
-echo "==>Docker从1.13版本开始调整了默认的防火墙规则，禁用了iptables filter表中FOWARD链，这样会引起Kubernetes集群中跨Node的Pod无法通信，因此docker安装完成后，还需要手动修改iptables规则:"
-sed -i "13i ExecStartPost=/usr/sbin/iptables -P FORWARD ACCEPT" /usr/lib/systemd/system/docker.service
-
-echo "==>docker加速/修改Driver为cgroupfs:"
-mkdir -p /etc/docker
-cat > /etc/docker/daemon.json <<EOF
-{
-  "registry-mirrors": ["https://q2hy3fzi.mirror.aliyuncs.com"],
-  "graph": "/tol/docker-data"
-}
-{  "exec-opts": ["native.cgroupdriver=systemd"],
-  "log-driver": "json-file",
-  "log-opts": {
-  "max-size": "100m"
-  },
-    "storage-driver": "overlay2"
-  }
-EOF
-
-systemctl daemon-reload
-systemctl restart docker
-systemctl status docker 
