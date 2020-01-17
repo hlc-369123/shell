@@ -79,6 +79,8 @@ docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/fluentd-elasticse
 echo $?&&echo '============================================='
 docker rmi registry.cn-hangzhou.aliyuncs.com/google_containers/fluentd-elasticsearch:v2.4.0
 echo $?&&echo '============================================='
+docker pull tutum/dnsutils:latest
+echo $?&&echo '============================================='
 
 mkdir docker_image
 cd docker_image
