@@ -23,6 +23,7 @@ bash -x kube-apiserver.sh >>/opt/install_k8s.log 2>&1
 # 修改ip，ip不要写错
 bash -x kube-controller-manager.sh >>/opt/install_k8s.log 2>&1
 
+# 修改ip，ip不要写错
 bash -x kube-scheduler.sh >>/opt/install_k8s.log 2>&1
 
 bash -x dep_docker.sh >>/opt/install_k8s.log 2>&1
