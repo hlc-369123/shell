@@ -15,7 +15,7 @@ done
 echo -e 'Generate_IP_list'
 token_name=$*
 if echo ${token_name}|egrep -w '\-\-token|\-t' >/dev/null 2>&1;then
-  TOKEN=$(docker exec -it -u postgres sds-postgres psql demon --pset=pager=off -c "select name,uuid from access_token;"|grep vasa-token|awk '{print $NF}')
+  TOKEN=$(docker exec -it -u postgres sds-postgres psql demon --pset=pager=off -c "select name,uuid from access_token;"|grep vasa-token|awk '{print $NF}'|tr -d "\r")
 else
   read -p "Enter your UI_USER, please: " UI_USER
   read -p "Enter your UI_USER_PASSWRD, please: " UI_USER_PASSWRD
