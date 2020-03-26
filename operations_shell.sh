@@ -4,13 +4,13 @@ mkdir -p /tmp/operations
 echo -e 'Judgment_for_management'
 xms-manage db list|awk '{print $1}' 1>/tmp/operations/test_db.log
 for i in $(cat /tmp/operations/test_db.log)
-  do
-    if ip a|grep $i >/dev/null;then
-      break
-    else
-      echo 'Execute on the management node'&&exit 1
-    fi
-  done
+do
+  if ip a|grep $i >/dev/null;then
+    break
+  else
+    echo 'Execute on the management node'&&exit 1
+  fi
+done
 
 echo -e 'Generate_IP_list'
 token_name=$*
