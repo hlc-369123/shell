@@ -24,6 +24,7 @@ if [[ -n ${TOKEN} ]]; then
   CLI="-t ${TOKEN}"
 elif [[ -n ${UI_USER}&&-n ${UI_USER_PASSWRD} ]]; then
   CLI="--user ${UI_USER} --password ${UI_USER_PASSWRD}"
+  if ! xms-cli $CLI host list>/dev/null 2>&1;then echo 'Wrong information...'&&exit 1;fi
 else
  echo -e "Value is empty...!"&&exit 1
 fi
