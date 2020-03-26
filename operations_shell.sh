@@ -24,6 +24,8 @@ if [[ -n ${TOKEN} ]]; then
   CLI="-t ${TOKEN}"
 elif [[ -n ${UI_USER}&&-n ${UI_USER_PASSWRD} ]]; then
   CLI="--user ${UI_USER} --password ${UI_USER_PASSWRD}"
+else
+ echo -e "Value is empty...!"&&exit 1
 fi
 PS3="请选择要执行得选项序列数字:=>"
 num=1
