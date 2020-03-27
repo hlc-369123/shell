@@ -61,7 +61,7 @@ do
       read -p "Enter your CHECK_NETWORK_IP, please: " CHECK_NETWORK_IP
       echo ${ADMIN_NETWORK_IP} 1>${ADMIN_IP}
       echo ${CHECK_NETWORK_IP} 1>${OTHER_IP}
-      exit 0
+      break
       ;;
     Quit)
       exit 0
