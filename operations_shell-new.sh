@@ -50,7 +50,8 @@ do
           if [[ $(echo $i |grep -o ','|wc -l) == '3' ]];then
             echo ${i}|sed -e 's/,/ /g'|awk '{print $1 >>"'${ADMIN_IP}'"} {print $2 >>"'${PUBLIC_IP}'"} {print $3 >>"'${PRIVATE_IP}'"} {print $4 >>"'${GATEWAY_IP}'"}'
           else
-            for ip_list in $(echo ${i}|sed -e "s/,/ /g");do echo $ip_list 1>>${OTHER_IP};done
+            #for ip_list in $(echo ${i}|sed -e "s/,/ /g");do echo $ip_list 1>>${OTHER_IP};done
+            for ip_list in $(echo ${i}|sed -e "s/,/ /g");do echo $ip_list;done|sort -u 1>>${OTHER_IP}
           fi
         fi
       done
