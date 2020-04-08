@@ -11,6 +11,8 @@ PRIVATE_IP='/tmp/operations/net/private_ip'
 GATEWAY_IP='/tmp/operations/net/gateway_ip'
 OTHER_IP='/tmp/operations/net/other_ip'
 LOG_INFO='/tmp/operations/result'
+BAI="\033[1;5;40;37m"
+RES="\033[0m"
 rm -rf /tmp/operations/*
 mkdir -p /tmp/operations/net
 
@@ -130,27 +132,28 @@ OTHER_IP='/tmp/operations/net/other_ip'
 LOG_INFO='/tmp/operations/result'
 RED_COLOUR="\033[1;5;42;31m"
 BOLD="\033[4;1m"
+BAI="\033[1;5;40;37m"
 RES="\033[0m"
 
 get_name=$(hostname)
 get_ip=$(hostname -i)
 echo -e "         ${BOLD}###########${get_name} ${get_ip}#############${RES}"
-echo -e "\n         >>> 交互分区状态:"
+echo -e "\n         ${BAI}>>> 交互分区状态:${RES}"
 CHECK_SWAP=$(swapon -s|egrep '[a-z]|[0-9]')
 if [[ -n ${CHECK_SWAP} ]];then
   echo -e "${RED_COLOUR}开启状态${RES}" |tee -a ${LOG_INFO}-warn.log
 else
   echo "关闭状态"|tee -a ${LOG_INFO}.log
 fi
-echo "         >>> 负载:"
+echo -e "         ${BAI}>>> 负载:${RES}"
 uptime|grep --color=never "average: [0-9]*.*"
 sar -q|tail -n1|awk '{print "ldavg-1: "$4,"\tldavg-5: "$5,"\tldavg-15: "$6}'
-echo "         >>> 根分区使用率和inode:"
+echo -e "         ${BAI}>>> 根分区使用率和inode:${RES}"
 df -h|head -n1&&df -h|grep "/$"
 df -i|head -n1&&df -i|grep "/$"
-echo "         >>> CPU和TOP10进程:"
+echo -e "         ${BAI}>>> CPU和TOP10进程:${RES}"
 top -bn 1|grep '^%Cpu'&&top -bn 1 -i -c|egrep -A 10 ^'.*PID'|awk '{$2=$3=$4=$5=$7=$8=$11="";print $0}'
-echo -e "\n         >>> 防火墙状态:"
+echo -e "\n         ${BAI}>>> 防火墙状态:${RES}"
 iptables_stat=$(systemctl is-active iptables)
 firewalld_stat=$(systemctl is-active firewalld)
 if [[ ${iptables_stat} == "active" || ${firewalld_stat} == "active" ]]; then
@@ -158,19 +161,21 @@ if [[ ${iptables_stat} == "active" || ${firewalld_stat} == "active" ]]; then
 else
   echo "关闭状态"|tee -a ${LOG_INFO}.log
 fi
-echo "         >>> SELINUX 状态:"
+echo -e "         ${BAI}>>> SELINUX 状态:${RES}"
 if [[ $(getenforce) == 'Disabled' ]];then
  echo "关闭状态"|tee -a ${LOG_INFO}.log
 else
  echo "${RED_COLOUR}开启状态${RES}"&&getenforce|tee -a ${LOG_INFO}-warn.log
 fi
-echo "         >>> 时间同步状态:"
+echo -e "         ${BAI}>>> 时间同步状态:${RES}"
 time_sync_stat=$(timedatectl status|awk '/synchronized/ {print $3}')
 if [[ ${time_sync_stat} == "yes" ]]; then
   echo "时间已同步"|tee -a ${LOG_INFO}.log
 else
   echo -e "${RED_COLOUR}时间未同步${RES}"|tee -a ${LOG_INFO}-warn.log
 fi
+echo -e "         ${BAI}>>> 节点启动之后丢包情况:${RES}"
+ifconfig |egrep -w 'inet|dropped'|awk '/inet/ {print $2} ; /dropped/ {print $1,$2,$3,$4,$5}'
 echo -e "\n"
 EOF
 
@@ -217,7 +222,7 @@ do
     elif [[ ${flag} == 'true' && ${action} == 'resource' ]]; then
        ssh -oStrictHostKeyChecking=no -oPasswordAuthentication=no root@${i} "bash ${NETWORK_DIR}check_resource.sh"
     elif [[ ${flag} == 'true' && ${action} == 'clockdiff' ]]; then
-      echo -e "############\n         >>> 各节点时间差:"
+      echo -e "############\n         ${BAI}>>> 各节点时间差:${RES}"
       time_sync_local ${i}
     fi
   elif [[ $? -eq 0 && ${action} == 'resource' ]]; then
@@ -239,16 +244,19 @@ do
       distribution_of_ip ${ADMIN_IP} resource
       bash ${NETWORK_DIR}check_resource.sh
       distribution_of_ip ${ADMIN_IP} clockdiff
-      echo -e "############\n         >>> OSD使用率:"
+      echo -e "############\n         ${BAI}>>> OSD使用率:${RES}"
       osd_use
       break
       ;;
     Custom_IP)
       read -p "Enter your ADMIN_NETWORK_IP, please: " ADMIN_NETWORK_IP
-      read -p "Enter your CHECK_NETWORK_IP, please: " CHECK_NETWORK_IP
       echo ${ADMIN_NETWORK_IP} 1>${ADMIN_IP}
-      echo ${CHECK_NETWORK_IP} 1>${OTHER_IP}
-      CHECK_NETWORK ${OTHER_IP}
+      distribution_of_ip ${ADMIN_IP} scp
+      distribution_of_ip ${NETWORK_CK_IP} check_network
+      distribution_of_ip ${ADMIN_IP} resource
+      distribution_of_ip ${ADMIN_IP} clockdiff
+      echo -e "############\n         ${BAI}>>> OSD使用率:${RES}"
+      osd_use
       break
       ;;
     Quit)
