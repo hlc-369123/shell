@@ -60,14 +60,12 @@ done
 #网络检测
 cat > /tmp/operations/net/check_network.sh << \EOF
 #!/usr/bin/env bash
-
 ADMIN_IP='/tmp/operations/net/admin_ip'
 PUBLIC_IP='/tmp/operations/net/public_ip'
 PRIVATE_IP='/tmp/operations/net/private_ip'
 GATEWAY_IP='/tmp/operations/net/gateway_ip'
 OTHER_IP='/tmp/operations/net/other_ip'
 LOG_INFO='/tmp/operations/result'
-
 CHECK_NETWORK(){
 RED_COLOUR="\033[1;41;37m"
 GREY_COLOUR="\033[1;40;37m"
@@ -103,7 +101,6 @@ do
   fi
 done
 }
-
 echo -e "\n==========="
 for ip_file in ${ADMIN_IP} ${PUBLIC_IP} ${PRIVATE_IP} ${GATEWAY_IP} ${OTHER_IP}
 do
@@ -117,13 +114,11 @@ EOF
 
 cat > /tmp/operations/net/check_resource.sh << \EOF
 #!/usr/bin/env bash
-
 LOG_INFO='/tmp/operations/result'
 RED_COLOUR="\033[1;41;37m"
 BOLD="\033[4;1m"
 BAI="\033[1;40;37m"
 RES="\033[0m"
-
 get_name=$(hostname)
 get_ip=$(hostname -i)
 echo -e "         ${BOLD}###########${get_name} ${get_ip}#############${RES}"
@@ -171,8 +166,11 @@ EOF
 cat > /tmp/operations/net/get_result.sh << \EOF
 #!/bin/bash
 
-get_result=$1
 LOG_INFO='/tmp/operations/result'
+get_result=$1
+BOLD="\033[4;1m"
+RED="\033[1;40;31m"
+RES="\033[0m"
 if [[ ${get_result} == info ]];then
   LOG_INFO="${LOG_INFO}.log"
 else
@@ -182,12 +180,12 @@ IFS=$'\n\n'
 get_name=$(hostname)
 get_ip=$(hostname -i)
 if [[ -f ${LOG_INFO} ]];then
-  echo -e "         ${BOLD}###########${get_name} ${get_ip}#############${RES}"
+  echo -e "\n         ${BOLD}>>>${get_name}_${get_ip}告警或异常信息如下:${RES}"
   for i in $(cat ${LOG_INFO})
   do
-    echo -e "\033[1;40;31m ${i} \033[0m"
+    echo -e "${RED} ${i} ${RES}"
   done
-  echo -e "\n"
+  #echo -e "\n"
 fi
 EOF
 
@@ -209,7 +207,7 @@ check_self_login() {
     self_login="true"
     echo ${self_login}
   elif [[ -n ${local_action} ]]; then
-    ssh -oStrictHostKeyChecking=no -oPasswordAuthentication=no root@${local_admin_ip} "mkdir -p ${NETWORK_DIR}&&rm -f /tmp/operations/net/{admin_ip,public_ip,private_ip,gateway_ip,other_ip,*.log,*.sh}"
+    ssh -oStrictHostKeyChecking=no -oPasswordAuthentication=no root@${local_admin_ip} "rm -f /tmp/operations/{*_ip,db_list,*.log,net/*};mkdir -p ${NETWORK_DIR}"
   fi
 }
 
@@ -232,19 +230,15 @@ do
     elif [[ ${flag} == 'true' && ${action} == 'check_network' ]]; then
       ssh -oStrictHostKeyChecking=no -oPasswordAuthentication=no root@${i} "bash ${NETWORK_DIR}check_network.sh"
     elif [[ ${flag} == 'true' && ${action} == 'resource' ]]; then
-       ssh -oStrictHostKeyChecking=no -oPasswordAuthentication=no root@${i} "bash ${NETWORK_DIR}check_resource.sh"
+      ssh -oStrictHostKeyChecking=no -oPasswordAuthentication=no root@${i} "bash ${NETWORK_DIR}check_resource.sh"
     elif [[ ${flag} == 'true' && ${action} == 'get_result' ]]; then
       ssh -oStrictHostKeyChecking=no -oPasswordAuthentication=no root@${i} "bash ${NETWORK_DIR}get_result.sh"
+    elif [[ ${flag} == 'true' && ${action} == 'clean_env' ]]; then
+      ssh -oStrictHostKeyChecking=no -oPasswordAuthentication=no root@${i} "rm -f /tmp/operations/{*_ip,db_list,*.log,net/*}"
     elif [[ ${flag} == 'true' && ${action} == 'clockdiff' ]]; then
       echo -e "############\n         ${BAI}>>> 各节点时间差:${RES}"
       time_sync_local ${i}
     fi
-  elif [[ ${action} == 'check_network' ]]; then
-    bash ${NETWORK_DIR}check_network.sh
-  elif [[ ${action} == 'resource' ]]; then
-    bash ${NETWORK_DIR}check_resource.sh
-  elif [[ ${action} == 'get_result' ]]; then
-    bash ${NETWORK_DIR}get_result.sh
   fi
 done
 }
@@ -252,20 +246,20 @@ done
 #执行检查方式
 PS3="请选择要执行得选项序列数字:=>"
 num=1
-select choice in Cluster_nodes Custom_IP Quit
+select choice in Cluster_nodes Custom_IP Clean_env Quit
 do
   case $choice in
     Cluster_nodes)
       distribution_of_ip ${ADMIN_IP} scp
       distribution_of_ip ${NETWORK_CK_IP} check_network
-      #bash ${NETWORK_DIR}check_network.sh
+      bash ${NETWORK_DIR}check_network.sh
       distribution_of_ip ${ADMIN_IP} resource
-      #bash ${NETWORK_DIR}check_resource.sh
+      bash ${NETWORK_DIR}check_resource.sh
       distribution_of_ip ${ADMIN_IP} clockdiff
       echo -e "############\n         ${BAI}>>> OSD使用率:${RES}"
       osd_use
       distribution_of_ip ${ADMIN_IP} get_result
-      #bash ${NETWORK_DIR}get_result.sh
+      bash ${NETWORK_DIR}get_result.sh
       break
       ;;
     Custom_IP)
@@ -277,6 +271,11 @@ do
       distribution_of_ip ${ADMIN_IP} clockdiff
       echo -e "############\n         ${BAI}>>> OSD使用率:${RES}"
       osd_use
+      break
+      ;;
+    Clean_env)
+      distribution_of_ip ${ADMIN_IP} clean_env
+      rm -f /tmp/operations/{*_ip,db_list,*.log,net/*}
       break
       ;;
     Quit)
