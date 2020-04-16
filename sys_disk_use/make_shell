@@ -1,3 +1,10 @@
+# 安装相关依赖包：
+yum clean all&&yum makecache fast&&yum -y install iotop isolate
+
+# 检查相关依赖包：
+if ! iostat -V &>/dev/null || ! iotop --version &>/dev/null ;then echo "Please install the \"iotop\" or \"iostat\" ......";fi
+
+# 生成监控脚本，下文直接复制粘贴到终端即可（默认收集周期为2s一次，如果需要修改，请修改下文中的2和19）
 cat >  /tmp/sys_diskuse.sh << \EOF
 #!/bin/bash
 
@@ -10,3 +17,7 @@ date >> ${log_file}
 sleep 1
 exit 0
 EOF
+
+# 添加计划任务
+crontab -e
+* * * * * /bin/bash /tmp/sys_diskuse.sh
