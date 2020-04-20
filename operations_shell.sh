@@ -112,6 +112,7 @@ done
 echo -e "\n"
 EOF
 
+#资源信息
 cat > /tmp/operations/net/check_resource.sh << \EOF
 #!/usr/bin/env bash
 LOG_INFO='/tmp/operations/result'
@@ -172,6 +173,7 @@ done
 echo -e "\n"
 EOF
 
+#结果判断
 cat > /tmp/operations/net/get_result.sh << \EOF
 #!/bin/bash
 
@@ -198,15 +200,18 @@ if [[ -f ${LOG_INFO} ]];then
 fi
 EOF
 
+#时间差
 time_sync_local(){
   local check_ip=$1
   clockdiff -o1 ${check_ip}
 }
 
+#获取osd使用率
 osd_use(){
   ceph osd df|sort -n -k 7|awk '{print $1,$7}'|grep "^[0-9]"|awk '{if ($2 > 80) print "\033[1;40;31m""osd_ID: osd."$1"\tUSE: "$2"%""\033[0m" ; else print "osd_ID: osd."$1"\tUSE: "$2"%"}'|tee -a ${LOG_INFO}.log
 }
 
+#判断ssh
 check_self_login() {
   local local_admin_ip=$1
   local local_action=$2
@@ -220,6 +225,7 @@ check_self_login() {
   fi
 }
 
+#执行相关的动作
 distribution_of_ip(){
   local admin_ip=$1
   local action=$2
@@ -252,7 +258,7 @@ do
 done
 }
 
-#执行检查方式
+#功能调用
 PS3="请选择要执行得选项序列数字:=>"
 num=1
 select choice in Cluster_nodes Custom_IP Clean_env Quit
