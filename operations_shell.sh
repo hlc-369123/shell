@@ -160,6 +160,15 @@ else
 fi
 echo -e "         ${BAI}>>> 节点启动之后丢包情况:${RES}"|tee -a ${LOG_INFO}.log
 ifconfig |egrep -w 'inet|dropped'|awk '/inet/ {print $2} ; /dropped/ {print $1,$2,$3,$4,$5}'|tee -a ${LOG_INFO}.log
+server_list='network docker xmsd xdc'
+for server in ${server_list}
+do
+  systemctl is-active ${server}.service &>/dev/null
+  if [[ $? -ne 0 ]]; then 
+    echo -e "${RED_COLOUR}${server}.service not active${RES}"|tee -a ${LOG_INFO}_warn.log
+  fi
+  sleep 0.1
+done
 echo -e "\n"
 EOF
 
