@@ -204,8 +204,7 @@ time_sync_local(){
 }
 
 osd_use(){
-  #ceph osd df|sort -n -k 7|awk '{print $1,$7}'|grep "^[0-9]"|awk '{print "osd_ID: osd."$1"\tUSE: "$2"%"}'|tee -a ${LOG_INFO}.log
-  ceph osd df|sort -n -k 7|awk '{print $1,$7}'|grep "^[0-9]"|awk '{if ($2 > 4) print "\033[1;40;31m""osd_ID: osd."$1"\tUSE: "$2"%""\033[0m" ; else print "osd_ID: osd."$1"\tUSE: "$2"%"}'|tee -a ${LOG_INFO}.log
+  ceph osd df|sort -n -k 7|awk '{print $1,$7}'|grep "^[0-9]"|awk '{if ($2 > 80) print "\033[1;40;31m""osd_ID: osd."$1"\tUSE: "$2"%""\033[0m" ; else print "osd_ID: osd."$1"\tUSE: "$2"%"}'|tee -a ${LOG_INFO}.log
 }
 
 check_self_login() {
