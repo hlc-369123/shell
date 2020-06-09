@@ -1,6 +1,9 @@
 #!/bin/bash
 
-# 修改hostsname.txt environment.sh (ip/主机名/网卡名)
+# 修改hostsname.txt environment.sh (ip/主机名/网卡名/密码)
+
+sed -i s/172.16.68.11/x.x.x.x/ hostsname.txt
+
 bash -x copy_ssh_id.sh >>/opt/install_k8s.log 2>&1
 
 cd bin
