@@ -3,6 +3,8 @@
 # 修改hostsname.txt environment.sh
 bash -x copy_ssh_id.sh >>/opt/install_k8s.log 2>&1
 
+cd bin
+
 bash -x create_ssl.sh >>/opt/install_k8s.log 2>&1
 
 bash -x dep_kubectl_tool.sh >>/opt/install_k8s.log 2>&1
