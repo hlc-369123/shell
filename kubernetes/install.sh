@@ -33,6 +33,7 @@ bash -x kube-scheduler.sh >>/opt/install_k8s.log 2>&1
 
 bash -x dep_docker.sh >>/opt/install_k8s.log 2>&1
 
+# 1.15.0版本添加“--allow-privileged”参数将导致kubelet状态持续重启中；
 bash -x kubelet.sh >>/opt/install_k8s.log 2>&1
 
 bash -x kube-proxy.sh >>/opt/install_k8s.log 2>&1
