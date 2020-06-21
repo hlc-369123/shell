@@ -40,6 +40,7 @@ else
 fi
 if [[ -n ${TOKEN} ]]; then
   CLI="-t ${TOKEN}"
+  if ! xms-cli $CLI host list 1>/dev/null ;then exit 1;fi
 elif [[ -n ${UI_USER}&&-n ${UI_USER_PASSWRD} ]]; then
   CLI="--user ${UI_USER} --password ${UI_USER_PASSWRD}"
   if ! xms-cli $CLI host list &>/dev/null;then echo 'Wrong information...'&&exit 1;fi
@@ -162,13 +163,13 @@ if [[ ${time_sync_stat} == "yes" ]]; then
 else
   echo -e "${RED_COLOUR}时间未同步${RES}"|tee -a ${LOG_INFO}_warn.log
 fi
-echo -e "         ${BAI}>>> 节点启动之后丢包情况:${RES}"|tee -a ${LOG_INFO}.log
-ifconfig |egrep -w 'inet|dropped'|awk '/inet/ {print $2} ; /dropped/ {print $1,$2,$3,$4,$5}'|tee -a ${LOG_INFO}.log
+# echo -e "         ${BAI}>>> 节点启动之后丢包情况:${RES}"|tee -a ${LOG_INFO}.log
+# ifconfig |egrep -w 'inet|dropped'|awk '/inet/ {print $2} ; /dropped/ {print $1,$2,$3,$4,$5}'|tee -a ${LOG_INFO}.log
 server_list='network docker xmsd xdc'
 for server in ${server_list}
 do
   systemctl is-active ${server}.service &>/dev/null
-  if [[ $? -ne 0 ]]; then 
+  if [[ $? -ne 0 ]]; then
     echo -e "${RED_COLOUR}${server}.service not active${RES}"|tee -a ${LOG_INFO}_warn.log
   fi
   sleep 0.1
@@ -179,7 +180,6 @@ EOF
 #结果判断
 cat > /tmp/operations/net/get_result.sh << \EOF
 #!/bin/bash
-
 LOG_INFO='/tmp/operations/result'
 get_result=$1
 BOLD="\033[4;1m"
@@ -223,7 +223,7 @@ check_self_login() {
   if [[ $? -eq 0 && -z ${local_action} ]]; then
     self_login="true"
     echo ${self_login}
-  elif [[ -n ${local_action} ]]; then
+  elif [[ -n ${local_action} ]] && ! ip addr|grep ${local_admin_ip} &> /dev/null ; then
     ssh -oStrictHostKeyChecking=no -oPasswordAuthentication=no root@${local_admin_ip} "rm -f /tmp/operations/{*_ip,db_list,*.log,net/*};mkdir -p ${NETWORK_DIR}"
   fi
 }
@@ -232,10 +232,14 @@ check_self_login() {
 distribution_of_ip(){
   local admin_ip=$1
   local action=$2
+  local origin=$3
 for i in $(cat ${admin_ip})
 do
-  ip address |grep ${i} &> /dev/null
-  if [[ $? -ne 0 ]]; then
+  if [[ $origin != 'Custom_IP' ]];then
+    ip address |grep ${i} &> /dev/null
+    EXITVALUE=$?
+  fi
+  if [[ $EXITVALUE -ne 0 || $origin == 'Custom_IP' ]]; then
     flag=$(check_self_login ${i})
     if [[ ${flag} == 'true' && ${action} == 'scp' ]];then
       check_self_login ${i} create_dir
@@ -264,29 +268,64 @@ done
 #功能调用
 PS3="请选择要执行得选项序列数字:=>"
 num=1
-select choice in Cluster_nodes Custom_IP Clean_env Quit
+echo -e "1).检查网络;\n2).检查资源;\n3).自定义节点检查网络和资源;\n4).清理检查后文件;\n5).退出;\n"
+select choice in Cluster_network Get_res Custom_IP Clean_env Quit
 do
   case $choice in
-    Cluster_nodes)
-      distribution_of_ip ${ADMIN_IP} scp
-      distribution_of_ip ${NETWORK_CK_IP} check_network
+    Cluster_network)
+      distribution_of_ip ${ADMIN_IP} scp Cluster_network
+      distribution_of_ip ${NETWORK_CK_IP} check_network Cluster_network
       bash ${NETWORK_DIR}check_network.sh
-      distribution_of_ip ${ADMIN_IP} resource
+      #distribution_of_ip ${ADMIN_IP} resource Cluster_network
+      #bash ${NETWORK_DIR}check_resource.sh
+      #distribution_of_ip ${ADMIN_IP} clockdiff Cluster_network
+      #echo -e "############\n         ${BAI}>>> OSD使用率:${RES}"
+      #osd_use
+      distribution_of_ip ${ADMIN_IP} get_result Cluster_network
+      bash ${NETWORK_DIR}get_result.sh
+      break
+      ;;
+    Get_res)
+      distribution_of_ip ${ADMIN_IP} scp Get_res
+      #distribution_of_ip ${NETWORK_CK_IP} check_network Get_res
+      #bash ${NETWORK_DIR}check_network.sh
+      distribution_of_ip ${ADMIN_IP} resource Get_res
       bash ${NETWORK_DIR}check_resource.sh
-      distribution_of_ip ${ADMIN_IP} clockdiff
+      distribution_of_ip ${ADMIN_IP} clockdiff Get_res
       echo -e "############\n         ${BAI}>>> OSD使用率:${RES}"
       osd_use
-      distribution_of_ip ${ADMIN_IP} get_result
+      distribution_of_ip ${ADMIN_IP} get_result Get_res
       bash ${NETWORK_DIR}get_result.sh
       break
       ;;
     Custom_IP)
       read -p "Enter your ADMIN_NETWORK_IP, please: " ADMIN_NETWORK_IP
       echo ${ADMIN_NETWORK_IP} 1>${ADMIN_IP}
-      distribution_of_ip ${ADMIN_IP} scp
-      distribution_of_ip ${NETWORK_CK_IP} check_network
-      distribution_of_ip ${ADMIN_IP} resource
-      distribution_of_ip ${ADMIN_IP} clockdiff
+      distribution_of_ip ${ADMIN_IP} scp Custom_IP
+      distribution_of_ip ${NETWORK_CK_IP} check_network Custom_IP
+      distribution_of_ip ${ADMIN_IP} resource Custom_IP
+      distribution_of_ip ${ADMIN_IP} clockdiff Custom_IP
       echo -e "############\n         ${BAI}>>> OSD使用率:${RES}"
       osd_use
-      
+      break
+      ;;
+    Clean_env)
+      distribution_of_ip ${ADMIN_IP} clean_env Clean_env
+      rm -f /tmp/operations/{*_ip,db_list,*.log,net/*}
+      break
+      ;;
+    Quit)
+      exit 0
+      ;;
+    *)
+      if [ -z "$choice" ];then
+        if [ "$num" -ge 3 ];then
+          echo "$num)您可以重新运行!..."
+          exit 2
+        else
+          echo "$num)请输入正确的序列号!"
+        fi
+        ((num++))
+      fi
+  esac
+done
