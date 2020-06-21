@@ -20,12 +20,15 @@ rm -f /tmp/operations/{*_ip,db_list,*.log,net/*}
 xms-manage db list|awk '{print $1}' 1>${TEST_DB}
 for i in $(cat ${TEST_DB})
 do
-  if ip a|grep $i &>/dev/null;then
+  ip a|grep $i &>/dev/null
+  EXITVALUE=$?
+  if [[ $EXITVALUE == '0' ]];then
     break
-  else
-    echo 'Execute on the management node'&&exit 1
   fi
 done
+if [[ $EXITVALUE != '0' ]];then
+  echo 'Execute on the management node'&&exit 1
+fi
 
 #接收访问数据库所需的方式
 token_name=$*
@@ -286,25 +289,4 @@ do
       distribution_of_ip ${ADMIN_IP} clockdiff
       echo -e "############\n         ${BAI}>>> OSD使用率:${RES}"
       osd_use
-      break
-      ;;
-    Clean_env)
-      distribution_of_ip ${ADMIN_IP} clean_env
-      rm -f /tmp/operations/{*_ip,db_list,*.log,net/*}
-      break
-      ;;
-    Quit)
-      exit 0
-      ;;
-    *)
-      if [ -z "$choice" ];then
-        if [ "$num" -ge 3 ];then
-          echo "$num)您可以重新运行!..."
-          exit 2
-        else
-          echo "$num)请输入正确的序列号!"
-        fi
-        ((num++))
-      fi
-  esac
-done
+      
