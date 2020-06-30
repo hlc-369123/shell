@@ -1,0 +1,8 @@
+#!/bin/bash
+
+for i in $(cat /etc/hosts|grep sds|awk '{print $2}')
+do
+  echo $i
+  osd_num=$(ssh $i "ls /var/run/ceph/ceph-osd.*.asok")
+  for y in $osd_num;do echo $y ; ssh $i "ceph --admin-daemon $y perf dump |grep mscache_poll_nv_head_flush_sched_q_count";ssh $i "ceph --admin-daemon $y config show | grep biggerio_bypass_enable";done
+done
