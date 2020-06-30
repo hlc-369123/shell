@@ -1,0 +1,13 @@
+#!/bin/bash
+
+for i in `ls */*/*|grep '/'|sed 's/://g'`
+do
+    d_dir=$(echo $i|sed 's/\///g;s/^0*//g')
+    echo "$i --->>> ${d_dir}"
+    echo "-------------------------"
+    mkdir /opt/test_cov/${d_dir}
+    rsync -avx $i/* /opt/test_cov/${d_dir}
+    rescode=$?
+    if [ $rescode == '0' ];then echo "Rsync is OK!";fi
+    sleep 10
+done
