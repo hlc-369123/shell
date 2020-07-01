@@ -1,0 +1,31 @@
+# This is a method that requires the automatic generation of disk uuids
+
+# cat /etc/rc.d/rc.local
+    #!/bin/bash
+    # THIS FILE IS ADDED FOR COMPATIBILITY PURPOSES
+    #
+    # It is highly advisable to create own systemd services or udev rules
+    # to run scripts during boot instead of using this file.
+    #
+    # In contrast to previous versions due to parallel execution during boot
+    # this script will NOT be run after all other services.
+    #
+    # Please note that you must run 'chmod +x /etc/rc.d/rc.local' to ensure
+    # that this script will be executed during boot.
+
+    touch /var/lock/subsys/local
+
+    /bin/bash -c '/usr/local/bin/disk_uuid.sh'
+
+# chmod +x /etc/rc.d/rc.local
+
+# cat /usr/local/bin/disk_uuid.sh
+    #!/bin/bash
+
+    cd /dev/disk/by-id
+    data_disk=$(lsblk |grep disk|egrep -v "`lsblk |grep '/boot$'|egrep -o 'sd.|vd.|hd.'`|^sd."|awk '{print $1}')
+    host_ip=$(ip add|sed -rn '/state UP/{n;n;s#^ *inet (.*)/.*$#\1#gp}'|head -n1)
+    for disk in ${data_disk}
+    do
+      ln -s ../../${disk} "wwn-`echo ${host_ip}-${disk}|md5sum|awk '{print $1}'`"
+    done
