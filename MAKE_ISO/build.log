@@ -1,0 +1,318 @@
+# bash -x build.sh
++ set -e -o pipefail
++ source ./config
+++ TARGET_PREFIX=http://gitbuilder.xsky.com/os-images
+++ BOA_PREFIX=http://gitbuilder.xsky.com/boa-rpm-centos7-x86_64-basic/ref
+++ RELEASE_PREFIX=http://release.xsky.com
+++ BASE_ISO=CentOS-7-x86_64-DVD-1810.iso
+++ MD5SUM_FILE=md5.txt
+++ PASSWORD=Password@_
+++ BOA_CONF=/etc/boa.conf
+++ HOSTNAME=xscaler
+++ XS_PREFIX=sds-oem-xe-2000-installer-
+++ ROOT_DRIVER_SIZE=222
+++ ISO_VOLUME_ID=XSCALER
+++ HOSTNAME_FILE=/etc/hostname
+++ INSTALLER_DIR=/opt/xscaler/installer
+++ ISO_VERSION_DIR=/opt/xscaler
+++ ISO_VERSION_FILE=/etc/iso-version
+++ PRODUCT_MODEL_FILE=/etc/xs-product-model
+
++ source ./VERSION
+++ XS_VERSION=XS_4.2.200.0.200623
+++ ISO_VERSION=XS_4.2.200.0.200623
+++ BOA_VERSION=XS_4.2.200.0.200622
+++ OS_NAME='XSKY SDS OS'
+++ OS_NAME_ID=xsky-sds-os
+++ OS_VERSION=4.2
+++ OS_VERSION_ID=4.2
+
+++ pwd
++ BASE_DIR=/root/xera-master
++ TMPL_DIR=/root/xera-master/templates
++ BIN_DIR=/root/xera-master/common/bin/
+
++ CACHE_DIR=/root/xera-master/cache
++ BASE_ISO_FILE=/root/xera-master/cache/CentOS-7-x86_64-DVD-1810.iso
++ BOOT_DIR=/root/xera-master/cache/bootiso
++ SOFTWARE_DIR=/root/xera-master/cache/bootiso/software
+
++ build_iso
++ plog 'Beginnig build ISO'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:10:53Z]' 'Beginnig build ISO'
+[2020-07-05T09:10:53Z] Beginnig build ISO
+
++ prepare
++ rpm -q isomd5sum
++ rpm -q genisoimage
++ rpm -q syslinux
+
++ get_base_iso
++ plog 'Check or load base ISO CentOS-7-x86_64-DVD-1810.iso.'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:10:53Z]' 'Check or load base ISO CentOS-7-x86_64-DVD-1810.iso.'
+[2020-07-05T09:10:53Z] Check or load base ISO CentOS-7-x86_64-DVD-1810.iso.
++ local url=http://gitbuilder.xsky.com/os-images/CentOS-7-x86_64-DVD-1810.iso
++ [[ ! -e /root/xera-master/cache/CentOS-7-x86_64-DVD-1810.iso ]]
++ checkisomd5 /root/xera-master/cache/CentOS-7-x86_64-DVD-1810.iso
+
+The media check is complete, the result is: PASS.
+
+It is OK to use this media.
++ [[ 0 != 0 ]]
+
++ init_boot_dir
++ local tmp_dir=/root/xera-master/cache/tmpiso
++ mkdir -p /root/xera-master/cache/tmpiso
++ plog 'Command: mount -o loop /root/xera-master/cache/CentOS-7-x86_64-DVD-1810.iso /root/xera-master/cache/tmpiso'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:11:20Z]' 'Command: mount -o loop /root/xera-master/cache/CentOS-7-x86_64-DVD-1810.iso /root/xera-master/cache/tmpiso'
+[2020-07-05T09:11:20Z] Command: mount -o loop /root/xera-master/cache/CentOS-7-x86_64-DVD-1810.iso /root/xera-master/cache/tmpiso
++ grep -qs /root/xera-master/cache/tmpiso /proc/mounts
++ mount -o loop /root/xera-master/cache/CentOS-7-x86_64-DVD-1810.iso /root/xera-master/cache/tmpiso
+mount: /dev/loop0 写保护，将以只读方式挂载
++ mkdir -p /root/xera-master/cache/bootiso
++ plog 'Command: cp -r /root/xera-master/cache/tmpiso/* /root/xera-master/cache/bootiso/'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:11:20Z]' 'Command: cp -r /root/xera-master/cache/tmpiso/* /root/xera-master/cache/bootiso/'
+[2020-07-05T09:11:20Z] Command: cp -r /root/xera-master/cache/tmpiso/* /root/xera-master/cache/bootiso/
++ cp -r /root/xera-master/cache/tmpiso/CentOS_BuildTag /root/xera-master/cache/tmpiso/EFI /root/xera-master/cache/tmpiso/EULA /root/xera-master/cache/tmpiso/GPL /root/xera-master/cache/tmpiso/images /root/xera-master/cache/tmpiso/isolinux /root/xera-master/cache/tmpiso/LiveOS /root/xera-master/cache/tmpiso/Packages /root/xera-master/cache/tmpiso/repodata /root/xera-master/cache/tmpiso/RPM-GPG-KEY-CentOS-7 /root/xera-master/cache/tmpiso/RPM-GPG-KEY-CentOS-Testing-7 /root/xera-master/cache/tmpiso/TRANS.TBL /root/xera-master/cache/bootiso/
++ chmod -R u+w /root/xera-master/cache/bootiso
++ umount /root/xera-master/cache/tmpiso
++ rm -rf /root/xera-master/cache/tmpiso
+
++ generate_iso_linux
++ local isolinux_dir=/root/xera-master/cache/bootiso/isolinux
++ local isolinux_file=/root/xera-master/cache/bootiso/isolinux/isolinux.cfg
++ plog 'Config kickstart and isolinux file'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:12:06Z]' 'Config kickstart and isolinux file'
+[2020-07-05T09:12:06Z] Config kickstart and isolinux file
++ cp -f /root/xera-master/templates/splash.png /root/xera-master/cache/bootiso/isolinux/splash.png
++ cp -f /root/xera-master/templates/isolinux.cfg.tmpl /root/xera-master/cache/bootiso/isolinux/isolinux.cfg
++ sed -i s#ISO_VOLUME_ID_will_be_replaced#XSCALER#g /root/xera-master/cache/bootiso/isolinux/isolinux.cfg
++ sed -i s#XS_VERSION_will_be_replaced#XS_4.2.200.0.200623#g /root/xera-master/cache/bootiso/isolinux/isolinux.cfg
+
++ generate_kickstart
++ local ks_tmpl=/root/xera-master/templates/ks.cfg.tmpl
++ local ks_file=/root/xera-master/cache/bootiso/isolinux/ks.cfg
++ local ks_parted_file=/root/xera-master/cache/bootiso/isolinux/ks-parted.cfg
++ local ks_file_xe2020=/root/xera-master/cache/bootiso/isolinux/ks-xe2020.cfg
++ local ks_file_xe2030=/root/xera-master/cache/bootiso/isolinux/ks-xe2030.cfg
++ local ks_file_xe2050=/root/xera-master/cache/bootiso/isolinux/ks-xe2050.cfg
++ local ks_file_xe2120=/root/xera-master/cache/bootiso/isolinux/ks-xe2120.cfg
++ local ks_file_xe2130=/root/xera-master/cache/bootiso/isolinux/ks-xe2130.cfg
++ local ks_file_xe3150=/root/xera-master/cache/bootiso/isolinux/ks-xe3150.cfg
++ local ks_file_xe3160=/root/xera-master/cache/bootiso/isolinux/ks-xe3160.cfg
++ local ks_file_xe3180=/root/xera-master/cache/bootiso/isolinux/ks-xe3180.cfg
++ local ks_file_x3000=/root/xera-master/cache/bootiso/isolinux/ks-x3000.cfg
+++ /root/xera-master/common/bin//crypt --sha-512 --password Password@_
++ local 'passwd_crypted=$6$A5bCpwEbUSu3YsUR$pdLQLoyv.Czeu9Du35iClTA/Gn9dNiMST7kuOv2COZ.MvazphJ1syHs7G0hwckm3Mn5z9oRMmYMElgpbGCaQj/'
++ plog 'Config kickstart and isolinux file'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:12:07Z]' 'Config kickstart and isolinux file'
+[2020-07-05T09:12:07Z] Config kickstart and isolinux file
++ cp -f /root/xera-master/templates/ks.cfg.tmpl /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#ROOT_DRIVER_SIZE_will_be_replaced#222#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#XS_PREFIX_will_be_replaced#sds-oem-xe-2000-installer-#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#HOSTNAME_will_be_replaced#xscaler#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#HOSTNAME_FILE_will_be_replaced#/etc/hostname#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#INSTALLER_DIR_will_be_replaced#/opt/xscaler/installer#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#ISO_VERSION_will_be_replaced#XS_4.2.200.0.200623#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#ISO_VERSION_DIR_will_be_replaced#/opt/xscaler#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#ISO_VERSION_FILE_will_be_replaced#/etc/iso-version#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#PRODUCT_MODEL_FILE_will_be_replaced#/etc/xs-product-model#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#ISO_VOLUME_ID_will_be_replaced#XSCALER#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#PASSWORD_will_be_replaced#Password@_#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i 's#PASSWORD_CRYPTED_will_be_replaced#rootpw --iscrypted $6$A5bCpwEbUSu3YsUR$pdLQLoyv.Czeu9Du35iClTA/Gn9dNiMST7kuOv2COZ.MvazphJ1syHs7G0hwckm3Mn5z9oRMmYMElgpbGCaQj/#g' /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i 's#OS_NAME_will_be_replaced#XSKY SDS OS#g' /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#OS_VERSION_will_be_replaced#4.2#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#BOA_CONF_will_be_replaced#/etc/boa.conf#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ cp /root/xera-master/cache/bootiso/isolinux/ks.cfg /root/xera-master/cache/bootiso/isolinux/ks-parted.cfg
++ sed -i s#CHECK_PARTED_will_be_replaced#uncheck#g /root/xera-master/cache/bootiso/isolinux/ks.cfg
++ sed -i s#CHECK_PARTED_will_be_replaced#check#g /root/xera-master/cache/bootiso/isolinux/ks-parted.cfg
++ cp /root/xera-master/cache/bootiso/isolinux/ks.cfg /root/xera-master/cache/bootiso/isolinux/ks-xe2020.cfg
++ cp /root/xera-master/cache/bootiso/isolinux/ks.cfg /root/xera-master/cache/bootiso/isolinux/ks-xe2030.cfg
++ cp /root/xera-master/cache/bootiso/isolinux/ks.cfg /root/xera-master/cache/bootiso/isolinux/ks-xe2050.cfg
++ cp /root/xera-master/cache/bootiso/isolinux/ks.cfg /root/xera-master/cache/bootiso/isolinux/ks-xe2120.cfg
++ cp /root/xera-master/cache/bootiso/isolinux/ks.cfg /root/xera-master/cache/bootiso/isolinux/ks-xe2130.cfg
++ cp /root/xera-master/cache/bootiso/isolinux/ks.cfg /root/xera-master/cache/bootiso/isolinux/ks-xe3150.cfg
++ cp /root/xera-master/cache/bootiso/isolinux/ks.cfg /root/xera-master/cache/bootiso/isolinux/ks-xe3160.cfg
++ cp /root/xera-master/cache/bootiso/isolinux/ks.cfg /root/xera-master/cache/bootiso/isolinux/ks-xe3180.cfg
++ cp /root/xera-master/cache/bootiso/isolinux/ks.cfg /root/xera-master/cache/bootiso/isolinux/ks-x3000.cfg
++ rm /root/xera-master/cache/bootiso/isolinux/ks.cfg /root/xera-master/cache/bootiso/isolinux/ks-parted.cfg
++ sed -i s#PRODUCT_MODEL_will_be_replaced#XE2020#g /root/xera-master/cache/bootiso/isolinux/ks-xe2020.cfg
++ sed -i s#CPUCores_will_be_replaced#8#g /root/xera-master/cache/bootiso/isolinux/ks-xe2020.cfg
++ sed -i s#MemorySize_will_be_replaced#32G#g /root/xera-master/cache/bootiso/isolinux/ks-xe2020.cfg
++ sed -i s#SSDNum_will_be_replaced#1#g /root/xera-master/cache/bootiso/isolinux/ks-xe2020.cfg
++ sed -i s#HDDNum_will_be_replaced#5#g /root/xera-master/cache/bootiso/isolinux/ks-xe2020.cfg
++ sed -i s#NIC1GPorts_will_be_replaced#4#g /root/xera-master/cache/bootiso/isolinux/ks-xe2020.cfg
++ sed -i s#PRODUCT_MODEL_will_be_replaced#XE2030#g /root/xera-master/cache/bootiso/isolinux/ks-xe2030.cfg
++ sed -i s#CPUCores_will_be_replaced#16#g /root/xera-master/cache/bootiso/isolinux/ks-xe2030.cfg
++ sed -i s#MemorySize_will_be_replaced#64G#g /root/xera-master/cache/bootiso/isolinux/ks-xe2030.cfg
++ sed -i s#SSDNum_will_be_replaced#1#g /root/xera-master/cache/bootiso/isolinux/ks-xe2030.cfg
++ sed -i s#HDDNum_will_be_replaced#5#g /root/xera-master/cache/bootiso/isolinux/ks-xe2030.cfg
++ sed -i s#NIC1GPorts_will_be_replaced#4#g /root/xera-master/cache/bootiso/isolinux/ks-xe2030.cfg
++ sed -i s#PRODUCT_MODEL_will_be_replaced#XE2050#g /root/xera-master/cache/bootiso/isolinux/ks-xe2050.cfg
++ sed -i s#CPUCores_will_be_replaced#16#g /root/xera-master/cache/bootiso/isolinux/ks-xe2050.cfg
++ sed -i s#MemorySize_will_be_replaced#128G#g /root/xera-master/cache/bootiso/isolinux/ks-xe2050.cfg
++ sed -i s#SSDNum_will_be_replaced#2#g /root/xera-master/cache/bootiso/isolinux/ks-xe2050.cfg
++ sed -i s#HDDNum_will_be_replaced#5#g /root/xera-master/cache/bootiso/isolinux/ks-xe2050.cfg
++ sed -i s#NIC1GPorts_will_be_replaced#4#g /root/xera-master/cache/bootiso/isolinux/ks-xe2050.cfg
++ sed -i s#PRODUCT_MODEL_will_be_replaced#XE2120#g /root/xera-master/cache/bootiso/isolinux/ks-xe2120.cfg
++ sed -i s#CPUCores_will_be_replaced#8#g /root/xera-master/cache/bootiso/isolinux/ks-xe2120.cfg
++ sed -i s#MemorySize_will_be_replaced#32G#g /root/xera-master/cache/bootiso/isolinux/ks-xe2120.cfg
++ sed -i s#SSDNum_will_be_replaced#1#g /root/xera-master/cache/bootiso/isolinux/ks-xe2120.cfg
++ sed -i s#HDDNum_will_be_replaced#5#g /root/xera-master/cache/bootiso/isolinux/ks-xe2120.cfg
++ sed -i s#NIC1GPorts_will_be_replaced#2#g /root/xera-master/cache/bootiso/isolinux/ks-xe2120.cfg
++ sed -i s#PRODUCT_MODEL_will_be_replaced#XE2130#g /root/xera-master/cache/bootiso/isolinux/ks-xe2130.cfg
++ sed -i s#CPUCores_will_be_replaced#16#g /root/xera-master/cache/bootiso/isolinux/ks-xe2130.cfg
++ sed -i s#MemorySize_will_be_replaced#64G#g /root/xera-master/cache/bootiso/isolinux/ks-xe2130.cfg
++ sed -i s#SSDNum_will_be_replaced#1#g /root/xera-master/cache/bootiso/isolinux/ks-xe2130.cfg
++ sed -i s#HDDNum_will_be_replaced#5#g /root/xera-master/cache/bootiso/isolinux/ks-xe2130.cfg
++ sed -i s#NIC1GPorts_will_be_replaced#2#g /root/xera-master/cache/bootiso/isolinux/ks-xe2130.cfg
++ sed -i s#PRODUCT_MODEL_will_be_replaced#XE3150#g /root/xera-master/cache/bootiso/isolinux/ks-xe3150.cfg
++ sed -i s#CPUCores_will_be_replaced#20#g /root/xera-master/cache/bootiso/isolinux/ks-xe3150.cfg
++ sed -i s#MemorySize_will_be_replaced#96G#g /root/xera-master/cache/bootiso/isolinux/ks-xe3150.cfg
++ sed -i s#SSDNum_will_be_replaced#2#g /root/xera-master/cache/bootiso/isolinux/ks-xe3150.cfg
++ sed -i s#HDDNum_will_be_replaced#10#g /root/xera-master/cache/bootiso/isolinux/ks-xe3150.cfg
++ sed -i s#NIC1GPorts_will_be_replaced#2#g /root/xera-master/cache/bootiso/isolinux/ks-xe3150.cfg
++ sed -i s#PRODUCT_MODEL_will_be_replaced#XE3160#g /root/xera-master/cache/bootiso/isolinux/ks-xe3160.cfg
++ sed -i s#CPUCores_will_be_replaced#24#g /root/xera-master/cache/bootiso/isolinux/ks-xe3160.cfg
++ sed -i s#MemorySize_will_be_replaced#96G#g /root/xera-master/cache/bootiso/isolinux/ks-xe3160.cfg
++ sed -i s#SSDNum_will_be_replaced#2#g /root/xera-master/cache/bootiso/isolinux/ks-xe3160.cfg
++ sed -i s#HDDNum_will_be_replaced#10#g /root/xera-master/cache/bootiso/isolinux/ks-xe3160.cfg
++ sed -i s#NIC1GPorts_will_be_replaced#2#g /root/xera-master/cache/bootiso/isolinux/ks-xe3160.cfg
++ sed -i s#PRODUCT_MODEL_will_be_replaced#XE3180#g /root/xera-master/cache/bootiso/isolinux/ks-xe3180.cfg
++ sed -i s#CPUCores_will_be_replaced#32#g /root/xera-master/cache/bootiso/isolinux/ks-xe3180.cfg
++ sed -i s#MemorySize_will_be_replaced#128G#g /root/xera-master/cache/bootiso/isolinux/ks-xe3180.cfg
++ sed -i s#SSDNum_will_be_replaced#2#g /root/xera-master/cache/bootiso/isolinux/ks-xe3180.cfg
++ sed -i s#HDDNum_will_be_replaced#10#g /root/xera-master/cache/bootiso/isolinux/ks-xe3180.cfg
++ sed -i s#NIC1GPorts_will_be_replaced#2#g /root/xera-master/cache/bootiso/isolinux/ks-xe3180.cfg
++ sed -i s#PRODUCT_MODEL_will_be_replaced#X3000#g /root/xera-master/cache/bootiso/isolinux/ks-x3000.cfg
++ sed -i s#CPUCores_will_be_replaced#20#g /root/xera-master/cache/bootiso/isolinux/ks-x3000.cfg
++ sed -i s#MemorySize_will_be_replaced#96G#g /root/xera-master/cache/bootiso/isolinux/ks-x3000.cfg
++ sed -i s#SSDNum_will_be_replaced#2#g /root/xera-master/cache/bootiso/isolinux/ks-x3000.cfg
++ sed -i s#HDDNum_will_be_replaced#10#g /root/xera-master/cache/bootiso/isolinux/ks-x3000.cfg
++ sed -i s#NIC1GPorts_will_be_replaced#4#g /root/xera-master/cache/bootiso/isolinux/ks-x3000.cfg
+
++ build_software
++ mkdir -p /root/xera-master/cache/bootiso/software
++ rm -rf /root/xera-master/cache/bootiso/software/boa-XS_4.2.200.0.200622-1.x86_64.rpm /root/xera-master/cache/bootiso/software/iperf3-3.1.7-2.el7.x86_64.rpm /root/xera-master/cache/bootiso/software/os-release /root/xera-master/cache/bootiso/software/sds-oem-xe-2000-installer-XS_4.2.200.0.200623.tar.gz /root/xera-master/cache/bootiso/software/sha256sum.txt
+
++ load_installer /root/xera-master/cache/bootiso/software
++ plog 'Check and download xscaler intalller'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:12:07Z]' 'Check and download xscaler intalller'
+[2020-07-05T09:12:07Z] Check and download xscaler intalller
++ local software_dir=/root/xera-master/cache/bootiso/software
++ local installer_dir=/root/xera-master/cache/XS_4.2.200.0.200623
++ local installer_file=/root/xera-master/cache/XS_4.2.200.0.200623/sds-oem-xe-2000-installer-XS_4.2.200.0.200623.tar.gz
++ local installer_sha256=/root/xera-master/cache/XS_4.2.200.0.200623/sha256sum.txt
+++ echo XS_4.2.200.0.200623
+++ grep -o '\.'
+++ wc -l
++ local dot_count=4
++ local release_url
++ [[ 4 -gt 3 ]]
++ release_url=http://release.xsky.com/dev
++ local file_url=http://release.xsky.com/dev/XS_4.2.200.0.200623/sds-oem-xe-2000-installer-XS_4.2.200.0.200623.tar.gz
++ local sha256_url=http://release.xsky.com/dev/XS_4.2.200.0.200623/sha256sum.txt
++ mkdir -p /root/xera-master/cache/XS_4.2.200.0.200623
++ [[ ! -e /root/xera-master/cache/XS_4.2.200.0.200623/sds-oem-xe-2000-installer-XS_4.2.200.0.200623.tar.gz ]]
++ [[ ! -e /root/xera-master/cache/XS_4.2.200.0.200623/sha256sum.txt ]]
++ cd /root/xera-master/cache/XS_4.2.200.0.200623
++ sha256sum -c /root/xera-master/cache/XS_4.2.200.0.200623/sha256sum.txt
+sds-oem-xe-2000-installer-XS_4.2.200.0.200623.tar.gz: 确定
++ [[ 0 != 0 ]]
++ cd -
+/root/xera-master
++ plog 'Command: cp /root/xera-master/cache/XS_4.2.200.0.200623/sds-oem-xe-2000-installer-XS_4.2.200.0.200623.tar.gz /root/xera-master/cache/XS_4.2.200.0.200623/sha256sum.txt /root/xera-master/cache/bootiso/software/'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:12:17Z]' 'Command: cp /root/xera-master/cache/XS_4.2.200.0.200623/sds-oem-xe-2000-installer-XS_4.2.200.0.200623.tar.gz /root/xera-master/cache/XS_4.2.200.0.200623/sha256sum.txt /root/xera-master/cache/bootiso/software/'
+[2020-07-05T09:12:17Z] Command: cp /root/xera-master/cache/XS_4.2.200.0.200623/sds-oem-xe-2000-installer-XS_4.2.200.0.200623.tar.gz /root/xera-master/cache/XS_4.2.200.0.200623/sha256sum.txt /root/xera-master/cache/bootiso/software/
++ cp /root/xera-master/cache/XS_4.2.200.0.200623/sds-oem-xe-2000-installer-XS_4.2.200.0.200623.tar.gz /root/xera-master/cache/XS_4.2.200.0.200623/sha256sum.txt /root/xera-master/cache/bootiso/software/
+
++ load_boa_rpm /root/xera-master/cache/bootiso/software
++ local software_dir=/root/xera-master/cache/bootiso/software
++ local url_prefix=http://gitbuilder.xsky.com/boa-rpm-centos7-x86_64-basic/ref/XS_4.2.200.0.200622
+++ curl http://gitbuilder.xsky.com/boa-rpm-centos7-x86_64-basic/ref/XS_4.2.200.0.200622/suffix
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100    34  100    34    0     0    204      0 --:--:-- --:--:-- --:--:--   206
++ local suffix=-XS_4.2.200.0.200622-1.x86_64.rpm
++ local url=http://gitbuilder.xsky.com/boa-rpm-centos7-x86_64-basic/ref/XS_4.2.200.0.200622/x86_64/boa-XS_4.2.200.0.200622-1.x86_64.rpm
++ rm -f '/root/xera-master/cache/bootiso/software/boa-*'
++ plog 'Command: wget http://gitbuilder.xsky.com/boa-rpm-centos7-x86_64-basic/ref/XS_4.2.200.0.200622/x86_64/boa-XS_4.2.200.0.200622-1.x86_64.rpm -P /root/xera-master/cache/bootiso/software'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:12:33Z]' 'Command: wget http://gitbuilder.xsky.com/boa-rpm-centos7-x86_64-basic/ref/XS_4.2.200.0.200622/x86_64/boa-XS_4.2.200.0.200622-1.x86_64.rpm -P /root/xera-master/cache/bootiso/software'
+[2020-07-05T09:12:33Z] Command: wget http://gitbuilder.xsky.com/boa-rpm-centos7-x86_64-basic/ref/XS_4.2.200.0.200622/x86_64/boa-XS_4.2.200.0.200622-1.x86_64.rpm -P /root/xera-master/cache/bootiso/software
++ wget http://gitbuilder.xsky.com/boa-rpm-centos7-x86_64-basic/ref/XS_4.2.200.0.200622/x86_64/boa-XS_4.2.200.0.200622-1.x86_64.rpm -P /root/xera-master/cache/bootiso/software
+--2020-07-05 17:12:33--  http://gitbuilder.xsky.com/boa-rpm-centos7-x86_64-basic/ref/XS_4.2.200.0.200622/x86_64/boa-XS_4.2.200.0.200622-1.x86_64.rpm
+正在解析主机 gitbuilder.xsky.com (gitbuilder.xsky.com)... 10.255.101.32
+正在连接 gitbuilder.xsky.com (gitbuilder.xsky.com)|10.255.101.32|:80... 已连接。
+已发出 HTTP 请求，正在等待回应... 200 OK
+长度：136139836 (130M) [application/x-redhat-package-manager]
+正在保存至: “/root/xera-master/cache/bootiso/software/boa-XS_4.2.200.0.200622-1.x86_64.rpm”
+
+100%[==================================================================================================================================>] 136,139,836 1.70MB/s 用时 76s
+
+2020-07-05 17:13:49 (1.70 MB/s) - 已保存 “/root/xera-master/cache/bootiso/software/boa-XS_4.2.200.0.200622-1.x86_64.rpm” [136139836/136139836])
+
+
++ generate_os_release /root/xera-master/cache/bootiso/software
++ local software_dir=/root/xera-master/cache/bootiso/software
++ local os_release_tmpl=/root/xera-master/templates/os-release.tmpl
++ local os_release_file=/root/xera-master/cache/bootiso/software/os-release
++ cp /root/xera-master/templates/os-release.tmpl /root/xera-master/cache/bootiso/software/os-release
++ sed -i 's/OS_NAME_will_be_replaced/XSKY SDS OS/g' /root/xera-master/cache/bootiso/software/os-release
++ sed -i s/OS_NAME_ID_will_be_replaced/xsky-sds-os/g /root/xera-master/cache/bootiso/software/os-release
++ sed -i s/OS_VERSION_will_be_replaced/4.2/g /root/xera-master/cache/bootiso/software/os-release
++ sed -i s/OS_VERSION_ID_will_be_replaced/4.2/g /root/xera-master/cache/bootiso/software/os-release
++ cp -a /root/xera-master/patches/iperf3-3.1.7-2.el7.x86_64.rpm /root/xera-master/cache/bootiso/software
+
++ make_iso
++ local target_dir=/root/xera-master/build/xscaler-XS_4.2.200.0.200623
++ local target=/root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso
++ mkdir -p /root/xera-master/build/xscaler-XS_4.2.200.0.200623
++ cd /root/xera-master/cache/bootiso
++ plog 'Make ISO /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:13:50Z]' 'Make ISO /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso'
+[2020-07-05T09:13:50Z] Make ISO /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso
++ mkisofs -o /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso -log-file ../mkisofs.log -input-charset utf-8 -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -V XSCALER -R -J -v -T -verbose .
+genisoimage 1.1.11 (Linux)
+re-directing all messages to ../mkisofs.log
++ cd -
+/root/xera-master
++ plog 'Command: isohybrid /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:14:59Z]' 'Command: isohybrid /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso'
+[2020-07-05T09:14:59Z] Command: isohybrid /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso
++ isohybrid /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso
+isohybrid: Warning: more than 1024 cylinders: 6355
+isohybrid: Not all BIOSes will be able to boot this device
++ plog 'Command: implantisomd5 /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:15:00Z]' 'Command: implantisomd5 /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso'
+[2020-07-05T09:15:00Z] Command: implantisomd5 /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso
++ implantisomd5 /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso
+Inserting md5sum into iso image...
+md5 = 550574ef7dd59163ca6e057dd737c2ec
+Inserting fragment md5sums into iso image...
+fragmd5 = 17e7bb6583ab8c169447eaad4df1ea115aff37b6c493afa299dcd89a885d
+frags = 20
+Setting supported flag to 0
++ md5sum /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso
+++ awk '{print $1}'
+++ du -bh /root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso
++ size=6.3G
++ plog 'ISO=/root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso, size 6.3G.'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:15:52Z]' 'ISO=/root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso, size 6.3G.'
+[2020-07-05T09:15:52Z] ISO=/root/xera-master/build/xscaler-XS_4.2.200.0.200623/xscaler-XS_4.2.200.0.200623.iso, size 6.3G.
++ plog 'Complete building ISO'
+++ date -u +%Y-%m-%dT%H:%M:%SZ
++ echo '[2020-07-05T09:15:52Z]' 'Complete building ISO'
+[2020-07-05T09:15:52Z] Complete building ISO
