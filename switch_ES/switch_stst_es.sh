@@ -82,7 +82,7 @@ check_xms_stat() {
       rebuild-ES "${action}"
       warnlog "$service_name status is $active_stat，Please check it！..." && exit 1
     else
-      sleep 20
+      sleep 10
     fi
   done
 }
@@ -151,7 +151,7 @@ action_es() {
       rebuild-ES "${action}"
       exit 1
     else
-      sleep 20
+      sleep 10
     fi
   done
 }
