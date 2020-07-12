@@ -56,7 +56,7 @@ else
 fi
 
 #获取集群各网段的ip
-xms-cli $CLI host list | awk '{print $14","$12","$10","$16}' | grep ^'[0-9]' 1>${CLUSTER_IP}
+xms-cli $CLI host list|grep "storage_server"|awk '{print $14","$12","$10","$16}'|grep ^'[0-9]' 1>${CLUSTER_IP}
 for i in $(grep ',' ${CLUSTER_IP}); do
   if [[ -n ${i} ]]; then
     if [[ $(echo $i | grep -o ',' | wc -l) == '3' ]]; then
@@ -176,15 +176,6 @@ if [[ $(getenforce) == 'Disabled' ]];then
 else
    echo "${RED_COLOUR}SELINUX开启状态${RES}"&&getenforce|tee -a ${LOG_INFO}_warn.log
 fi
-#echo -e "         ${BAI}>>> 时间同步状态:${RES}"
-#time_sync_stat=$(timedatectl status|awk '/synchronized/ {print $3}')
-#if [[ ${time_sync_stat} == "yes" ]]; then
-#  echo "时间已同步"|tee -a ${LOG_INFO}.log
-#else
-#  echo -e "${RED_COLOUR}时间未同步${RES}"|tee -a ${LOG_INFO}_warn.log
-#fi
-# echo -e "         ${BAI}>>> 节点启动之后丢包情况:${RES}"|tee -a ${LOG_INFO}.log
-# ifconfig |egrep -w 'inet|dropped'|awk '/inet/ {print $2} ; /dropped/ {print $1,$2,$3,$4,$5}'|tee -a ${LOG_INFO}.log
 server_list='network docker xmsd xdc'
 for server in ${server_list}
 do
@@ -279,7 +270,7 @@ distribution_of_ip() {
         log "${i} CheckResource..."
         ssh -oStrictHostKeyChecking=no -oPasswordAuthentication=no root@${i} "bash ${NETWORK_DIR}check_resource.sh &>/dev/null &"
       elif [[ ${flag} == 'true' && ${action} == 'get_result' ]]; then
-        warnlog "${i} GetResult..."
+        log "${i} GetResult..."
         ssh -oStrictHostKeyChecking=no -oPasswordAuthentication=no root@${i} "bash ${NETWORK_DIR}get_result.sh"
       elif [[ ${flag} == 'true' && ${action} == 'clean_env' ]]; then
         log "${i} CleanCheckInfo..."
@@ -315,7 +306,7 @@ select choice in Cluster_network Get_res Custom_IP Clean_env Quit; do
     #osd_use
     echo ""
     distribution_of_ip ${ADMIN_IP} get_result Cluster_network
-    warnlog "$(hostname -i) GetResult..."
+    log "$(hostname -i) GetResult..."
     bash ${NETWORK_DIR}get_result.sh
     break
     ;;
@@ -332,7 +323,7 @@ select choice in Cluster_network Get_res Custom_IP Clean_env Quit; do
     osd_use
     echo ""
     distribution_of_ip ${ADMIN_IP} get_result Get_res
-    warnlog "$(hostname -i) GetResult..."
+    log "$(hostname -i) GetResult..."
     bash ${NETWORK_DIR}get_result.sh
     break
     ;;
