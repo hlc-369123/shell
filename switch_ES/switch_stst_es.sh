@@ -9,19 +9,23 @@ log() {
 }
 
 warnlog() {
-  echo "$(date '+%Y-%m-%d %H:%M:%S')" "[WARN]" "$@"
+  local log_info=$@
+  echo -e ""$(date '+%Y-%m-%d %H:%M:%S')" "[WARN]" \033[1;31m${log_info}\033[0m"
 }
 
-host_ips=$(xms-manage db list 2>/dev/null | awk '{print $1}')
-if [[ -z "${host_ips}" ]]; then
-  warnlog "Failed to get admin host ips"
-fi
-log "Get admin host ips:"
-echo "$host_ips"
+get_admin_ip() {
+  host_ips=$(xms-manage db list 2>/dev/null | awk '{print $1}')
+  if [[ -z "${host_ips}" ]]; then
+    warnlog "Failed to get admin host ips"
+  fi
+  log "Get admin host ips:"
+  echo "$host_ips"
+}
 
 show_usage() {
   echo -e "Usage :\n \n--user \t\t\tuser name [\$XMS_USERNAME] \n--password \t\tuser password [\$XMS_PASSWORD] \n--action \t\t<disable/enable>\n"
-  echo -e "\ne.g : \n\n$0 --user [\$XMS_USERNAME] --password [\$XMS_PASSWORD] --action <disable/enable>\n"
+  echo -e "\ne.g : \nUse the full command. \n\n$0 --user [\$XMS_USERNAME] --password [\$XMS_PASSWORD] --action <disable/enable>\n"
+  echo -e "\ne.g : \nIf you configure '/etc/xms/xmsrc','source /etc/xms/xmsrc', you can avoid using '--user' and '--password'. \n\n$0  --action <disable/enable>\n"
 }
 
 userinfo() {
@@ -57,6 +61,8 @@ es_action() {
 check_xms_stat() {
   local ip=$1
   local service_name=$2
+  local action=$3
+  local repeat=$4
   local node_id=$(xms_cli_use "host list" | grep "${ip}" | awk '{print $2}')
   local node_roles=$(xms_cli_use "host show ${node_id}" | grep "roles" | awk '{print $4}')
   for i in {0..9}; do
@@ -72,7 +78,8 @@ check_xms_stat() {
     local up_stat=$(xms_cli_use "host show ${node_id}" | awk '/up /{print $4}')
     if [[ "${active_stat}" == "active" && "${up_stat}" == "true" ]]; then
       break
-    elif [[ "${i}" == '9' && "${active_stat}" != "active" ]]; then
+    elif [[ "${i}" == '9' && "${active_stat}" != "active" && "${repeat}" == "true" ]]; then
+      rebuild-ES "${action}"
       warnlog "$service_name status is $active_stat，Please check it！..." && exit 1
     else
       sleep 20
@@ -80,11 +87,26 @@ check_xms_stat() {
   done
 }
 
+rebuild-ES() {
+  local action=$1
+  if [[ "${action}" == "true" ]]; then
+    read -p "If you want to rebuild the ES, type 'y' or 'yes': " if_rebuild
+    if [[ "${if_rebuild}" == "y" || "${if_rebuild}" == "yes" ]]; then
+      /opt/sds/installer/bin/rebuild-elasticsearch
+      refresh_the_role "${host_ips}" "true" "false"
+    fi
+  else
+    warnlog "ES mission execution failure,Please check it !..."
+  fi
+}
+
 refresh_the_role() {
   local host_ips=$1
+  local action=$2
+  local repeat=$3
   for ip in ${host_ips}; do
     check_self_login "${ip}"
-    log "restart of xmsd on $ip..."
+    log "Restart of xmsd on $ip..."
     $SSH "${ip}" systemctl restart xmsd.service 2>/dev/null
     local xmsd_status=$($SSH "${ip}" systemctl is-active xmsd.service 2>/dev/null)
     if [[ "${xmsd_status}" != 'active' ]]; then sleep 10; fi
@@ -95,9 +117,9 @@ refresh_the_role() {
       log "$ip xmsd is active,Refresh the role..."
       local node_id=$(xms_cli_use "host list" | grep "${ip}" | awk '{print $2}')
       local node_roles=$(xms_cli_use "host show ${node_id}" | grep "roles" | awk '{print $4}')
-      check_xms_stat "${ip}" "Postgres_xmsd"
+      check_xms_stat "${ip}" "Postgres_xmsd" "${action}" "${repeat}"
       xms_cli_use "host set --roles ${node_roles} ${node_id}" 1>/dev/null
-      check_xms_stat "${ip}" "action_status"
+      check_xms_stat "${ip}" "action_status" "${action}" "${repeat}"
     else
       warnlog "$ip Xmsd  state failed, Please check it !..."
       systemctl status xmsd.service && exit 1
@@ -110,20 +132,24 @@ action_es() {
   es_action set "${action}" 1>/dev/null
   if [[ "${action}" == "false" ]]; then stst_action="true"; else stst_action="false"; fi
   for i in {0..9}; do
+    log "Checking the results!..."
     es_stat=$(es_action show | grep elasticsearch_enabled | awk '{print $4}')
     true_num=1
     if ! xms-manage db trigger list 2>/dev/null | grep -o "${stst_action}" &>/dev/null; then true_num=0; fi
     if [[ "${es_stat}" == "${action}" && "${true_num}" == '0' ]]; then
-      refresh_the_role "${host_ips}"
+      get_admin_ip
+      refresh_the_role "${host_ips}" "${action}" "true"
       refresh_code=$?
       if ! xms_cli_use 'service list' | grep 'elasticsearch' | grep 'error' && [[ "${refresh_code}" -eq 0 ]]; then
-        log "ES $action successful !..." && exit 0
+        log "Successful execution of task ES !..." && exit 0
       else
-        warnlog "The nodes below ES failed to $action，Please try again ！..."
-        xms_cli_use "service list" | grep 'elasticsearch' | grep 'error' | awk '{print $14}' && exit 1
+        rebuild-ES "${action}"
+        xms_cli_use "service list" | grep 'elasticsearch' | grep 'error'
+        exit 1
       fi
-    elif [[ $i -eq 9 && "${es_stat}" == "${action}" && "${true_num}" == '0' ]]; then
-      warnlog "ES $action failed,Please try again !..." && exit 1
+    elif [[ $i -eq 9 && "${es_stat}" == "${action}" ]]; then
+      rebuild-ES "${action}"
+      exit 1
     else
       sleep 20
     fi
@@ -159,6 +185,7 @@ else
   if ! xms_cli_use "host list" &>/dev/null; then warnlog "Wrong information..." && exit 1; fi
 fi
 
+log "${action}ing ES!..."
 if [ "${action}" == disable ]; then
   action_es false
 elif [ "${action}" == enable ]; then
