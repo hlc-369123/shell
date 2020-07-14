@@ -170,19 +170,19 @@ elif [ -z "${XMS_USERNAME}" ]; then
     user=$(userinfo "$*" --user)
     password=$(userinfo "$*" --password)
     action=$(userinfo "$*" --action)
-    if ! xms_cli_use "host list" &>/dev/null; then warnlog "Wrong user and password information..." && exit 1; fi
+    if ! xms_cli_use "host list" &>/dev/null; then warnlog "Incorrect username or password information..." && exit 1; fi
   fi
 elif [ -n "${XMS_USERNAME}" -o $# -eq 6 ]; then
   user=$(userinfo "$*" --user)
   password=$(userinfo "$*" --password)
   action=$(userinfo "$*" --action)
-  if ! xms_cli_use "host list" &>/dev/null; then warnlog "Wrong user and password information..." && exit 1; fi
+  if ! xms_cli_use "host list" &>/dev/null; then warnlog "Incorrect username or password information..." && exit 1; fi
 elif [ $# -lt 2 -o $# -gt 2 ]; then
   show_usage
   exit 0
 else
   action=$1
-  if ! xms_cli_use "host list" &>/dev/null; then warnlog "Wrong user and password information..." && exit 1; fi
+  if ! xms_cli_use "host list" &>/dev/null; then warnlog "Incorrect username or password information..." && exit 1; fi
 fi
 
 log "${action}ing ES!..."
