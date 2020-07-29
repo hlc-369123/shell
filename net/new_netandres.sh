@@ -69,7 +69,7 @@ else
   echo "1) Check all node networks in the cluster."
   echo "2) Check all node resources in the cluster."
   echo "3) Customize a node to check the network and resources."
-  echo "4) Clean up the files under "/tmp/operations/"."
+  echo "4) Clean up the files under \"/tmp/operations/\"."
   echo "5) exit."
   exit 0
 fi
