@@ -213,7 +213,7 @@ top -n 1 |grep Cpu | cut -d "," -f 1,2|awk \
 '$2>="'$CPU_USE'" || $4>="'$CPU_USE'" {print cpu_top >> warn}' cpu_top="$cpu_top" warn="${LOG_INFO}_warn.log"
 
 #Memory
-free -m | awk '/Mem:/ {print (1-$4/$2)*100}'|awk \
+free -m | awk '/Mem:/ {print (1-$7/$2)*100}'|awk \
 '$1>="'${MEMORY_USE}'" {print Memoy >> warn}' Memoy="$(free -h)" warn="${LOG_INFO}_warn.log"
 
 #Firewalld
